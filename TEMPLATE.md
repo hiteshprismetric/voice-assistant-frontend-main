@@ -1,7 +1,6 @@
 ## Overview
 
-A Next.js frontend for a simple AI voice assistant using LiveKit's official [JavaScript SDK](https://github.com/livekit/client-sdk-js) and [React Components](https://github.com/livekit/components-js). The application implements its own token server, and is designed to be used with any voice-enabled agent built using [LiveKit Agents](https://docs.livekit.io/agents/).
-
+ 
 ## Sandbox
 
 When deployed in a sandbox, LiveKit will host an instance of this application for you, providing a unique, shareable URL through which you can access it. Any agents running with the same LiveKit project credentials will join, meaning that you can rapidly iterate on your agent prototypes, and share the results instantly with friends and colleagues. To begin testing your agent, deploy this app in sandbox then set up an agent on your local machine using the [LiveKit CLI](https://docs.livekit.io/home/cli/cli-setup/):

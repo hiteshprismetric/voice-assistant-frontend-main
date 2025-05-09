@@ -65,7 +65,9 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
   const { state: agentState } = useVoiceAssistant();
   return (
     <>
-      <AnimatePresence>
+       {/* Container for AnimatePresence, RoomAudioRenderer, and NoAgentNotification */}
+       <div className="relative z-10">
+        <AnimatePresence>
         {agentState === "disconnected" && (
           <motion.button
             key="start-conversation-button" // Provide a unique key here
@@ -86,6 +88,8 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
 
       <RoomAudioRenderer />
       <NoAgentNotification state={agentState} />
+
+      </div>
       <div className="fixed bottom-0 w-full px-4 py-2">
         <ControlBar />
       </div>

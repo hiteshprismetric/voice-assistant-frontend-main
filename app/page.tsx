@@ -64,36 +64,38 @@ export default function Page() {
 function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
   const { state: agentState } = useVoiceAssistant();
   return (
-    <>
-       {/* Container for AnimatePresence, RoomAudioRenderer, and NoAgentNotification */}
-       <div className="relative z-10">
+    <div className="flex flex-col h-full">
+      {/* Content above the ControlBar */}
+      <div className="flex-grow overflow-y-auto">
         <AnimatePresence>
-        {agentState === "disconnected" && (
-          <motion.button
-            key="start-conversation-button" // Provide a unique key here
-            initial={{ opacity: 0, top: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, top: "-10px" }}
-            transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="uppercase absolute left-1/2 -translate-x-1/2 px-4 py-2 bg-white text-black rounded-md"
-            onClick={() => props.onConnectButtonClicked()}
-          >
-            Start a new conversation
-          </motion.button>
-        )}
-        <div className="w-3/4 lg:w-1/2 mx-auto h-full">
-          <TranscriptionView />
-        </div>
-      </AnimatePresence>
+          {agentState === "disconnected" && (
+            <motion.button
+              key="start-conversation-button" // Provide a unique key here
+              initial={{ opacity: 0, top: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, top: "-10px" }}
+              transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
+              className="uppercase absolute left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 bg-white text-black rounded-md z-10"
+              style={{
+                top: `calc((100% - 60px) / 2)`, // Adjust for the height of the ControlBar (60px)
+              }}
+              onClick={() => props.onConnectButtonClicked()}
+            >
+              Start a conversation
+            </motion.button>
+          )}
+          <div className="w-3/4 lg:w-1/2 mx-auto h-full">
+            <TranscriptionView />
+          </div>
+        </AnimatePresence>
 
-      <RoomAudioRenderer />
-      <NoAgentNotification state={agentState} />
-
+        <RoomAudioRenderer />
+        <NoAgentNotification state={agentState} />
       </div>
-      <div className="fixed bottom-0 w-full px-4 py-2 z-0">
+      <div className="w-full px-4 py-2 fixed bottom-0">
         <ControlBar />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -110,7 +112,7 @@ function ControlBar() {
   const { state: agentState, audioTrack } = useVoiceAssistant();
 
   return (
-    <div className="relative h-[100px]">
+    <div className="relative h-[60px] flex items-center justify-center">
       <AnimatePresence>
         {agentState !== "disconnected" && agentState !== "connecting" && (
           <motion.div
@@ -122,9 +124,9 @@ function ControlBar() {
           >
             <BarVisualizer
               state={agentState}
-              barCount={5}
+              barCount={4}
               trackRef={audioTrack}
-              className="agent-visualizer w-24 gap-2"
+              className="agent-visualizer w-24 gap-2 h-12"
               options={{ minHeight: 12 }}
             />
             <div className="flex items-center">

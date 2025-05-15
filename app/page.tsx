@@ -130,7 +130,7 @@ function ControlBar() {
   const krisp = useKrispNoiseFilter();
   useEffect(() => {
     krisp.setNoiseFilterEnabled(true);
-  }, [krisp]);
+  }, []);
 
   const { state: agentState } = useVoiceAssistant();
 

@@ -85,7 +85,6 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
             </motion.button>
           )}
           <ControlBar />
-
         </div>
       </div>
     </div >
@@ -113,8 +112,7 @@ function ControlBar() {
             animate={{ opacity: 1, top: 0 }}
             exit={{ opacity: 0, top: "-10px" }}
             transition={{ duration: 0.4, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="flex items-center justify-center w-full h-full"
-          >
+            className="flex items-center justify-center w-full h-full">
 
             <div className="flex items-center">
               <VoiceAssistantControlBar controls={{ leave: true, microphone: true }} />

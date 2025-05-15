@@ -16,7 +16,7 @@ export function UploadPDFButton() {
     formData.append("file", file);
     setUploading(true);
     setMessage("");
-    axios.post('http://localhost:5001/upload_pdf', formData)
+    axios.post('http://192.168.0.44:5001/upload_pdf', formData)
       .then(response => {
         console.log(response.data);  // Success
         setMessage("✅ File uploaded successfully.");

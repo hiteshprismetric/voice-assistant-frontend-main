@@ -21,6 +21,11 @@ export function UploadPDFButton() {
         console.log(response.data);  // Success
         setMessage("✅ File uploaded successfully.");
         setUploading(false);
+
+        // Clear message after 4 seconds
+        setTimeout(() => {
+          setMessage("");
+        }, 4000);
       })
       .catch(error => {
         console.error('Error uploading file:', error);

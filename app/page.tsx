@@ -23,6 +23,7 @@ export default function Page() {
 
   const onConnectButtonClicked = useCallback(async () => {
     if (!pdfUploaded) {
+      console.warn("PDF not uploaded");
       toast.warn("Please upload a PDF file before connecting."); // Show a warning message
       return; // Exit the function
     }
@@ -129,7 +130,7 @@ function ControlBar() {
   const krisp = useKrispNoiseFilter();
   useEffect(() => {
     krisp.setNoiseFilterEnabled(true);
-  }, []);
+  }, [krisp]);
 
   const { state: agentState } = useVoiceAssistant();
 

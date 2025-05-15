@@ -4,9 +4,10 @@ import { useState } from "react";
 import axios from 'axios';
 
 
-export function UploadPDFButton() {
+export function UploadPDFButton({ onUploadAction }: { onUploadAction: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+ 
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -21,18 +22,13 @@ export function UploadPDFButton() {
         console.log(response.data);  // Success
         setMessage("✅ File uploaded successfully.");
         setUploading(false);
-
-        // Clear message after 4 seconds
-        setTimeout(() => {
-          setMessage("");
-        }, 4000);
+        onUploadAction(); // Notify parent to hide button
       })
       .catch(error => {
         console.error('Error uploading file:', error);
         setMessage("❌ Upload failed.");
         setUploading(false);
       });
-
   };
 
   return (

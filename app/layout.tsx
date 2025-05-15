@@ -1,5 +1,6 @@
 import "@livekit/components-styles";
 import { Public_Sans } from "next/font/google";
+import { ToastContainer } from "react-toastify";
 import "./globals.css";
 
 const publicSans400 = Public_Sans({
@@ -14,7 +15,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`h-full ${publicSans400.className}`}>
-      <body className="h-full">{children}</body>
+      <body className="h-full"> <ToastContainer position="top-right" autoClose={3000} />{children}</body>
     </html>
   );
 }
+

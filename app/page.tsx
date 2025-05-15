@@ -9,6 +9,7 @@ import {
   useVoiceAssistant,
 } from "@livekit/components-react";
 import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
+import { toast } from "react-toastify"; // Ensure you have react-toastify installed
 import { AnimatePresence, motion } from "framer-motion";
 import { Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
@@ -18,19 +19,28 @@ import { UploadPDFButton } from "@/components/UploadPDFButton";
 
 export default function Page() {
   const [room] = useState(new Room());
+  const [pdfUploaded, setPdfUploaded] = useState(false);
 
   const onConnectButtonClicked = useCallback(async () => {
+    if (!pdfUploaded) {
+      toast.warn("Please upload a PDF file before connecting."); // Show a warning message
+      return; // Exit the function
+    }
+    try {
+      const url = new URL(
+        process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
+        window.location.origin
+      );
+      const response = await fetch(url.toString());
+      const connectionDetailsData: ConnectionDetails = await response.json();
 
-    const url = new URL(
-      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
-      window.location.origin
-    );
-    const response = await fetch(url.toString());
-    const connectionDetailsData: ConnectionDetails = await response.json();
-
-    await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
-    await room.localParticipant.setMicrophoneEnabled(true);
-  }, [room]);
+      await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
+      await room.localParticipant.setMicrophoneEnabled(true);
+    } catch (error) {
+      console.error("Connection error:", error);
+      toast.error("Failed to connect. Please try again."); // Handle connection errors
+    }
+  }, [room, pdfUploaded]);
 
   useEffect(() => {
     room.on(RoomEvent.MediaDevicesError, onDeviceFailure);
@@ -40,11 +50,23 @@ export default function Page() {
     };
   }, [room]);
 
+  useEffect(() => {
+    console.log("PDF Uploaded state updated:", pdfUploaded);
+  }, [pdfUploaded]);
+
+  const handlePDFUpload = useCallback(() => {
+    setPdfUploaded(true);
+    sessionStorage.setItem("pdfUploaded", "true");
+  }, []);
+
   return (
     <main data-lk-theme="default" className="h-full grid content-center bg-[var(--lk-bg)]">
       <RoomContext.Provider value={room}>
         <div className="lk-room-container h-screen">
-          <SimpleVoiceAssistant onConnectButtonClicked={onConnectButtonClicked} />
+          <SimpleVoiceAssistant
+            onConnectButtonClicked={onConnectButtonClicked}
+            pdfUploaded={pdfUploaded}
+            handlePDFUpload={handlePDFUpload} />
         </div>
       </RoomContext.Provider>
     </main>
@@ -52,8 +74,13 @@ export default function Page() {
 }
 
 
-function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
+function SimpleVoiceAssistant(props: {
+  onConnectButtonClicked: () => void;
+  pdfUploaded: boolean;
+  handlePDFUpload: () => void;
+}) {
   const { state: agentState } = useVoiceAssistant();
+
   return (
     <div className="flex flex-col h-full">
       {/* Content above the ControlBar */}
@@ -70,7 +97,10 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
 
       <div className=" w-full bottom-4 flex flex-col items-center space-y-4">
         <div className="flex items-center space-x-4">
-          <UploadPDFButton />
+          {!props.pdfUploaded && <UploadPDFButton onUploadAction={props.handlePDFUpload} />}
+          {props.pdfUploaded && <div className="my-4 flex flex-col items-center">
+            <p className="mt-2 text-sm">{"File uploded"}</p>
+          </div>}
           {agentState === "disconnected" && (
             <motion.button
               key="start-conversation-button" // Provide a unique key here

@@ -23,9 +23,12 @@ export default function TranscriptionView() {
           key={segment.id}
           className={
             segment.role === "assistant"
-              ? "p-2 self-start fit-content"
-              : "bg-gray-800 rounded-md p-2 self-end fit-content"
-          }
+              ? "bg-gray-700 rounded-md p-2 self-start mr-4 fit-content"
+              : "bg-gray-800 rounded-md p-2 self-end ml-4 fit-content"
+          } style={{
+            marginLeft: segment.role !== "assistant" ? "10%" : "0",
+            marginRight: segment.role === "assistant" ? "10%" : "0",
+          }}
         >
           {segment.text}
         </div>

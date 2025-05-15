@@ -1,11 +1,8 @@
 "use client";
 
-import { CloseIcon } from "@/components/CloseIcon";
 import { NoAgentNotification } from "@/components/NoAgentNotification";
 import TranscriptionView from "@/components/TranscriptionView";
 import {
-  BarVisualizer,
-  DisconnectButton,
   RoomAudioRenderer,
   RoomContext,
   VoiceAssistantControlBar,
@@ -16,19 +13,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
+import { UploadPDFButton } from "@/components/UploadPDFButton";
+
 
 export default function Page() {
   const [room] = useState(new Room());
 
   const onConnectButtonClicked = useCallback(async () => {
-    // Generate room connection details, including:
-    //   - A random Room name
-    //   - A random Participant name
-    //   - An Access Token to permit the participant to join the room
-    //   - The URL of the LiveKit server to connect to
-    //
-    // In real-world application, you would likely allow the user to specify their
-    // own participant name, and possibly to choose from existing rooms to join.
 
     const url = new URL(
       process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
@@ -52,7 +43,7 @@ export default function Page() {
   return (
     <main data-lk-theme="default" className="h-full grid content-center bg-[var(--lk-bg)]">
       <RoomContext.Provider value={room}>
-        <div className="lk-room-container max-h-[90vh]">
+        <div className="lk-room-container h-screen">
           <SimpleVoiceAssistant onConnectButtonClicked={onConnectButtonClicked} />
         </div>
       </RoomContext.Provider>
@@ -68,22 +59,6 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
       {/* Content above the ControlBar */}
       <div className="flex-grow overflow-y-auto">
         <AnimatePresence>
-          {agentState === "disconnected" && (
-            <motion.button
-              key="start-conversation-button" // Provide a unique key here
-              initial={{ opacity: 0, top: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, top: "-10px" }}
-              transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
-              className="uppercase absolute left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 bg-white text-black rounded-md z-10"
-              style={{
-                top: `calc((100% - 60px) / 2)`, // Adjust for the height of the ControlBar (60px)
-              }}
-              onClick={() => props.onConnectButtonClicked()}
-            >
-              Start a conversation
-            </motion.button>
-          )}
           <div className="w-3/4 lg:w-1/2 mx-auto h-full">
             <TranscriptionView />
           </div>
@@ -92,10 +67,28 @@ function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
         <RoomAudioRenderer />
         <NoAgentNotification state={agentState} />
       </div>
-      <div className="w-full px-4 py-2 fixed bottom-0">
-        <ControlBar />
+
+      <div className=" w-full bottom-4 flex flex-col items-center space-y-4">
+        <div className="flex items-center space-x-4">
+          <UploadPDFButton />
+          {agentState === "disconnected" && (
+            <motion.button
+              key="start-conversation-button" // Provide a unique key here
+              initial={{ opacity: 0, top: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, top: "-10px" }}
+              transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
+              className="uppercase px-4 py-2 bg-white text-black rounded-md z-10"
+              onClick={() => props.onConnectButtonClicked()}
+            >
+              Start
+            </motion.button>
+          )}
+          <ControlBar />
+
+        </div>
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -109,7 +102,7 @@ function ControlBar() {
     krisp.setNoiseFilterEnabled(true);
   }, []);
 
-  const { state: agentState, audioTrack } = useVoiceAssistant();
+  const { state: agentState } = useVoiceAssistant();
 
   return (
     <div className="relative h-[60px] flex items-center justify-center">
@@ -120,20 +113,14 @@ function ControlBar() {
             animate={{ opacity: 1, top: 0 }}
             exit={{ opacity: 0, top: "-10px" }}
             transition={{ duration: 0.4, ease: [0.09, 1.04, 0.245, 1.055] }}
-            className="flex absolute w-full h-full justify-between px-8 sm:px-4"
+            className="flex items-center justify-center w-full h-full"
           >
-            <BarVisualizer
-              state={agentState}
-              barCount={4}
-              trackRef={audioTrack}
-              className="agent-visualizer w-24 gap-2 h-12"
-              options={{ minHeight: 12 }}
-            />
+
             <div className="flex items-center">
-              <VoiceAssistantControlBar controls={{ leave: false }} />
-              <DisconnectButton>
+              <VoiceAssistantControlBar controls={{ leave: true, microphone: true }} />
+              {/* <DisconnectButton>
                 <CloseIcon />
-              </DisconnectButton>
+              </DisconnectButton> */}
             </div>
           </motion.div>
         )}

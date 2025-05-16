@@ -2,12 +2,20 @@
 
 import { NoAgentNotification } from "@/components/NoAgentNotification";
 import TranscriptionView from "@/components/TranscriptionView";
+import * as React from 'react';
 import {
   RoomAudioRenderer,
   RoomContext,
-  VoiceAssistantControlBar,
+  DisconnectButton,
   useVoiceAssistant,
+  TrackToggle,
+  BarVisualizer,
+  useLocalParticipant,
+  useLocalParticipantPermissions,
 } from "@livekit/components-react";
+import { usePersistentUserChoices } from '@livekit/components-react/hooks';
+import { Track } from 'livekit-client';
+import type { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
 import { toast } from "react-toastify"; // Ensure you have react-toastify installed
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,6 +23,8 @@ import { Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
 import { UploadPDFButton } from "@/components/UploadPDFButton";
+const mergeProps = (...props: React.HTMLAttributes<HTMLDivElement>[]): React.HTMLAttributes<HTMLDivElement> =>
+  Object.assign({}, ...props);
 
 
 export default function Page() {
@@ -24,7 +34,7 @@ export default function Page() {
   const onConnectButtonClicked = useCallback(async () => {
     if (!pdfUploaded) {
       console.warn("PDF not uploaded");
-      toast.warn("Please upload a PDF file before connecting."); // Show a warning message
+      toast.warn("Please upload a PDF file before start."); // Show a warning message
       return; // Exit the function
     }
     try {
@@ -100,7 +110,7 @@ function SimpleVoiceAssistant(props: {
         <div className="flex items-center space-x-4">
           {!props.pdfUploaded && <UploadPDFButton onUploadAction={props.handlePDFUpload} />}
           {props.pdfUploaded && <div className="my-4 flex flex-col items-center">
-            <p className="mt-2 text-sm">{"File uploded"}</p>
+            <p className="mt-2 text-sm" style={{ color: "green" }}>{"File uploded"}</p>
           </div>}
           {agentState === "disconnected" && (
             <motion.button
@@ -122,17 +132,45 @@ function SimpleVoiceAssistant(props: {
   );
 }
 
-function ControlBar() {
-  /**
-   * Use Krisp background noise reduction when available.
-   * Note: This is only available on Scale plan, see {@link https://livekit.io/pricing | LiveKit Pricing} for more details.
-   */
+function ControlBar(props: React.HTMLAttributes<HTMLDivElement>) {
+  const visibleControls = { leave: true, microphone: true };
+
   const krisp = useKrispNoiseFilter();
   useEffect(() => {
     krisp.setNoiseFilterEnabled(true);
   }, []);
-
+  const localPermissions = useLocalParticipantPermissions();
+  const { microphoneTrack, localParticipant } = useLocalParticipant();
   const { state: agentState } = useVoiceAssistant();
+  const saveUserChoices = true;
+
+  const micTrackRef: TrackReferenceOrPlaceholder = React.useMemo(() => {
+    return {
+      participant: localParticipant,
+      source: Track.Source.Microphone,
+      publication: microphoneTrack,
+    };
+  }, [localParticipant, microphoneTrack]);
+  const htmlProps = mergeProps({ className: 'lk-agent-control-bar' }, props);
+
+  if (!localPermissions) {
+    visibleControls.microphone = false;
+  } else {
+    visibleControls.microphone ??= localPermissions.canPublish;
+  }
+
+  const { saveAudioInputEnabled } = usePersistentUserChoices({
+    preventSave: !saveUserChoices,
+  });
+
+  const microphoneOnChange = React.useCallback(
+    (enabled: boolean, isUserInitiated: boolean) => {
+      if (isUserInitiated) {
+        saveAudioInputEnabled(enabled);
+      }
+    },
+    [saveAudioInputEnabled],
+  );
 
   return (
     <div className="relative h-[60px] flex items-center justify-center">
@@ -146,7 +184,20 @@ function ControlBar() {
             className="flex items-center justify-center w-full h-full">
 
             <div className="flex items-center">
-              <VoiceAssistantControlBar controls={{ leave: true, microphone: true }} />
+              <div {...htmlProps}>
+                <div className="lk-button-group" >
+                  <TrackToggle
+                    source={Track.Source.Microphone}
+                    showIcon={true}
+                    onChange={microphoneOnChange}
+                  >
+                    <BarVisualizer trackRef={micTrackRef} barCount={7} options={{ minHeight: 10 }} />
+                  </TrackToggle>
+
+                </div>
+              </div>
+              <DisconnectButton>{'Disconnect'}</DisconnectButton>
+              {/* <VoiceAssistantControlBar controls={{ leave: true, microphone: true }} /> */}
               {/* <DisconnectButton>
                 <CloseIcon />
               </DisconnectButton> */}

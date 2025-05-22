@@ -9,7 +9,6 @@ import {
   DisconnectButton,
   useVoiceAssistant,
   TrackToggle,
-  BarVisualizer,
   useLocalParticipant,
   useLocalParticipantPermissions,
 } from "@livekit/components-react";
@@ -22,6 +21,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
+import { CircularVisualizer } from "@/components/CircularVisualizer";
 import { UploadPDFButton } from "@/components/UploadPDFButton";
 const mergeProps = (...props: React.HTMLAttributes<HTMLDivElement>[]): React.HTMLAttributes<HTMLDivElement> =>
   Object.assign({}, ...props);
@@ -97,7 +97,7 @@ function SimpleVoiceAssistant(props: {
       {/* Content above the ControlBar */}
       <div className="flex-grow overflow-y-auto">
         <AnimatePresence>
-          <div className="w-3/4 lg:w-1/2 mx-auto h-full">
+          <div className="w-full lg:w-[95%] mx-auto h-full">
             <TranscriptionView />
           </div>
         </AnimatePresence>
@@ -110,8 +110,9 @@ function SimpleVoiceAssistant(props: {
         <div className="flex items-center space-x-4">
           {!props.pdfUploaded && <UploadPDFButton onUploadAction={props.handlePDFUpload} />}
           {props.pdfUploaded && <div className="my-4 flex flex-col items-center">
-            <p className="mt-2 text-sm" style={{ color: "green" }}>{"File uploded"}</p>
+            <p className="mt-2 text-sm" style={{ color: "green" }}>{"File uploaded"}</p>
           </div>}
+
           {agentState === "disconnected" && (
             <motion.button
               key="start-conversation-button" // Provide a unique key here
@@ -127,6 +128,65 @@ function SimpleVoiceAssistant(props: {
           )}
           <ControlBar />
         </div>
+
+        {/* <div className="w-full lg:w-[95%] mx-auto bg-gray-100 rounded-2xl p-4 flex items-center space-x-4">
+          <div className="flex-shrink-0">
+            {!props.pdfUploaded && (
+              <UploadPDFButton onUploadAction={props.handlePDFUpload} />
+            )}
+            {props.pdfUploaded && (
+              <div className="flex flex-col items-center">
+                <p className="text-sm text-green-600">File uploaded</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Type your message..."
+              className="w-full px-4 py-2 bg-white rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            {agentState === "disconnected" ? (
+              <motion.button
+                key="start-conversation-button"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 1, ease: [0.09, 1.04, 0.245, 1.055] }}
+                className="uppercase px-4 py-2 bg-white text-black rounded-md"
+                onClick={() => props.onConnectButtonClicked()}
+              >
+                Start
+              </motion.button>
+            ) : (
+              <>
+                <ControlBar />
+                <button
+                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
+        </div> */}
       </div>
     </div >
   );
@@ -175,6 +235,7 @@ function ControlBar(props: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className="relative h-[60px] flex items-center justify-center">
       <AnimatePresence>
+
         {agentState !== "disconnected" && agentState !== "connecting" && (
           <motion.div
             initial={{ opacity: 0, top: "10px" }}
@@ -185,16 +246,18 @@ function ControlBar(props: React.HTMLAttributes<HTMLDivElement>) {
 
             <div className="flex items-center">
               <div {...htmlProps}>
-                <div className="lk-button-group" >
+                <div  >
                   <TrackToggle
                     source={Track.Source.Microphone}
                     showIcon={true}
                     onChange={microphoneOnChange}
                   >
-                    <BarVisualizer trackRef={micTrackRef} barCount={7} options={{ minHeight: 10 }} />
+                    {/* <BarVisualizer trackRef={micTrackRef} barCount={7} options={{ minHeight: 10 }} /> */}
                   </TrackToggle>
 
                 </div>
+
+                <CircularVisualizer trackRef={micTrackRef} barCount={7} size={50} />
               </div>
               <DisconnectButton>{'Disconnect'}</DisconnectButton>
               {/* <VoiceAssistantControlBar controls={{ leave: true, microphone: true }} /> */}

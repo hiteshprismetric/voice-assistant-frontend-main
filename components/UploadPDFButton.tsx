@@ -35,19 +35,20 @@ export function UploadPDFButton({ onUploadAction }: { onUploadAction: () => void
       console.log("Checking for encryption...");
       const arrayBuffer = await file.arrayBuffer();
       await PDFDocument.load(arrayBuffer, { ignoreEncryption: true }); // Load with ignoreEncryption to avoid errors
-
+      console.log("Attempting to load PDF...");
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       if (pdfDoc.isEncrypted) {
-        setMessage("❌ Encrypted PDFs are not allowed.");
-        console.warn("File rejected: PDF is encrypted.");
+        setMessage("❌ Encrypted PDFs are not allowed12345.");
+        console.warn("File rejected: PDF is encrypted12345.");
         return;
       }
       console.log("PDF is valid and not encrypted.");
     } catch (error: unknown) {
+      console.error("Error encountered while reading PDF:", error);
       if (error instanceof Error) {
         if (error.message.includes("encrypted")) {
-          setMessage("❌ Encrypted PDFs are not allowed.");
-          console.warn("File rejected: PDF is encrypted.");
+          setMessage("❌ Encrypted PDFs are not allowed8787.");
+          console.warn("File rejected: PDF is encrypted.8787");
         } else {
           setMessage("❌ Invalid PDF file.");
           console.error("Error reading PDF:", error);
@@ -63,7 +64,7 @@ export function UploadPDFButton({ onUploadAction }: { onUploadAction: () => void
 
     console.log("Uploading file to server...");
 
-    axios.post('http://27.54.168.98:5001/upload_pdf', formData)
+    axios.post('http://192.168.0.118:5001/upload_pdf', formData)
       .then(response => {
         console.log("Upload successful:", response.data);
         setMessage("✅ File uploaded successfully.");

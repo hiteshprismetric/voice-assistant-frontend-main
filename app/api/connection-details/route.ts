@@ -1,5 +1,6 @@
 import { AccessToken, AccessTokenOptions, VideoGrant } from "livekit-server-sdk";
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 
 // NOTE: you are expected to define the following environment variables in `.env.local`:
 const API_KEY = process.env.LIVEKIT_API_KEY;
@@ -16,7 +17,7 @@ export type ConnectionDetails = {
   participantToken: string;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     if (LIVEKIT_URL === undefined) {
       throw new Error("LIVEKIT_URL is not defined");
@@ -28,25 +29,19 @@ export async function GET() {
       throw new Error("LIVEKIT_API_SECRET is not defined");
     }
 
-    // Generate participant token
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
-    const participantToken = await createParticipantToken(
-      { identity: participantIdentity },
-      roomName
-    );
 
-    // Return connection details
-    const data: ConnectionDetails = {
+    const { searchParams } = new URL(request.url);
+    const roomName = searchParams.get("roomName") || `voice_assistant_room_${randomUUID()}`;
+    const participantName = searchParams.get("participantName") || `voice_assistant_user_${randomUUID()}`;
+    const participantToken = await createParticipantToken({ identity: participantName }, roomName);
+
+
+    return NextResponse.json({
       serverUrl: LIVEKIT_URL,
       roomName,
-      participantToken: participantToken,
-      participantName: participantIdentity,
-    };
-    const headers = new Headers({
-      "Cache-Control": "no-store",
+      participantName,
+      participantToken,
     });
-    return NextResponse.json(data, { headers });
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);
@@ -54,6 +49,7 @@ export async function GET() {
     }
   }
 }
+
 
 function createParticipantToken(userInfo: AccessTokenOptions, roomName: string) {
   const at = new AccessToken(API_KEY, API_SECRET, {

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useMultibandTrackVolume, type AgentState } from '@livekit/components-react/hooks';
-import type { TrackReferenceOrPlaceholder } from '@livekit/components-core';
+import type { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { useMaybeTrackRefContext } from '@livekit/components-react';
 import {
     useBarAnimator
@@ -48,9 +48,9 @@ export const CircularVisualizer: React.FC<CircularVisualizerProps> = ({
 
     const highlightedIndices = useBarAnimator(state, barCount, getSequencerInterval(state, barCount) ?? 100);
     // Debug: Log volumeBands to verify updates
-    React.useEffect(() => {
-        console.log('volumeBands:', volumeBands);
-    }, [volumeBands]);
+    // React.useEffect(() => {
+    //     console.log('volumeBands:', volumeBands);
+    // }, [volumeBands]);
 
     React.useEffect(() => {
         console.log('trackReference:', trackReference);

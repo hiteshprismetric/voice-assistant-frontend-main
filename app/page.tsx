@@ -23,6 +23,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
 import { CircularVisualizer } from "@/components/CircularVisualizer";
 import { UploadPDFButton } from "@/components/UploadPDFButton";
+import { CloseIcon } from "@/components/CloseIcon";
 const mergeProps = (...props: React.HTMLAttributes<HTMLDivElement>[]): React.HTMLAttributes<HTMLDivElement> =>
   Object.assign({}, ...props);
 
@@ -38,13 +39,29 @@ export default function Page() {
       return; // Exit the function
     }
     try {
-      const url = new URL(
-        process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
-        window.location.origin
-      );
-      const response = await fetch(url.toString());
-      const connectionDetailsData: ConnectionDetails = await response.json();
+      const roomName = sessionStorage.getItem("roomName");
+      const participantName = sessionStorage.getItem("participantName");
 
+      let connectionDetailsData: ConnectionDetails;
+
+      if (!roomName || !participantName) {
+        // First-time session: get fresh details
+        const url = new URL("/api/connection-details", window.location.origin);
+        const response = await fetch(url.toString());
+        connectionDetailsData = await response.json();
+
+        sessionStorage.setItem("roomName", connectionDetailsData.roomName);
+        sessionStorage.setItem("participantName", connectionDetailsData.participantName);
+      } else {
+        // Existing session: reuse values
+        const url = new URL("/api/connection-details", window.location.origin);
+        url.searchParams.set("roomName", roomName);
+        url.searchParams.set("participantName", participantName);
+
+        const response = await fetch(url.toString());
+        connectionDetailsData = await response.json();
+      }
+      console.log(`Connecting to server: ${connectionDetailsData.serverUrl} with token: ${connectionDetailsData.participantToken} with participantName: ${connectionDetailsData.participantName} with roomName: ${connectionDetailsData.roomName}`);
       await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
       await room.localParticipant.setMicrophoneEnabled(true);
     } catch (error) {
@@ -65,6 +82,16 @@ export default function Page() {
     console.log("PDF Uploaded state updated:", pdfUploaded);
   }, [pdfUploaded]);
 
+  useEffect(() => {
+    const roomName = sessionStorage.getItem("roomName") || "DefaultRoom";
+    console.log("Room name retrieved:", roomName);
+
+    sessionStorage.removeItem("roomName");
+    sessionStorage.removeItem("participantName");
+
+    const roomNames = sessionStorage.getItem("roomName") || "DefaultRoom";
+    console.log("Room name retrieved:", roomNames);
+  }, []);
   const handlePDFUpload = useCallback(() => {
     setPdfUploaded(true);
     sessionStorage.setItem("pdfUploaded", "true");
@@ -106,11 +133,11 @@ function SimpleVoiceAssistant(props: {
         <NoAgentNotification state={agentState} />
       </div>
 
-      <div className=" w-full bottom-4 flex flex-col items-center space-y-4">
+      <div className=" w-full flex flex-col items-center space-y-4">
         <div className="flex items-center space-x-4">
           {!props.pdfUploaded && <UploadPDFButton onUploadAction={props.handlePDFUpload} />}
           {props.pdfUploaded && <div className="my-4 flex flex-col items-center">
-            <p className="mt-2 text-sm" style={{ color: "green" }}>{"File uploaded"}</p>
+            <p className="my-2 text-sm" style={{ color: "green" }}>{"File uploaded"}</p>
           </div>}
 
           {agentState === "disconnected" && (
@@ -129,7 +156,7 @@ function SimpleVoiceAssistant(props: {
           <ControlBar />
         </div>
 
-        {/* <div className="w-full lg:w-[95%] mx-auto bg-gray-100 rounded-2xl p-4 flex items-center space-x-4">
+        {/* <div className="w-full lg:w-[95%] mx-auto bg-gray-800 rounded-2xl p-2 flex items-center space-x-4 bottom-4">
           <div className="flex-shrink-0">
             {!props.pdfUploaded && (
               <UploadPDFButton onUploadAction={props.handlePDFUpload} />
@@ -194,15 +221,45 @@ function SimpleVoiceAssistant(props: {
 
 function ControlBar(props: React.HTMLAttributes<HTMLDivElement>) {
   const visibleControls = { leave: true, microphone: true };
-
   const krisp = useKrispNoiseFilter();
-  useEffect(() => {
-    krisp.setNoiseFilterEnabled(true);
-  }, []);
+  const krispInitializedRef = React.useRef(false); // ✅ Add here
+  const { state: agentState } = useVoiceAssistant();
+
   const localPermissions = useLocalParticipantPermissions();
   const { microphoneTrack, localParticipant } = useLocalParticipant();
-  const { state: agentState } = useVoiceAssistant();
   const saveUserChoices = true;
+  const htmlProps = mergeProps({ className: 'lk-agent-control-bar' }, props);
+
+
+  useEffect(() => {
+    const isLive = ["listening", "thinking", "speaking"].includes(agentState);
+
+    if (isLive && krisp && !krispInitializedRef.current) {
+      try {
+        if (!krisp.isNoiseFilterEnabled) {
+          console.log("Initializing noise filter...");
+          krisp.setNoiseFilterEnabled(true);
+          krispInitializedRef.current = true;
+        }
+      } catch (error: unknown) {
+        if (
+          error instanceof Error &&
+          error.message.toLowerCase().includes("already initialized")
+        ) {
+          console.warn("Krisp SDK already initialized, skipping.");
+          krispInitializedRef.current = true;
+        } else {
+          console.error("Krisp initialization failed:", error);
+        }
+      }
+    }
+
+    if (agentState === "disconnected") {
+      krisp.setNoiseFilterEnabled(false); // Disable filter
+      krispInitializedRef.current = false;
+    }
+  }, [agentState, krisp]);
+
 
   const micTrackRef: TrackReferenceOrPlaceholder = React.useMemo(() => {
     return {
@@ -211,7 +268,6 @@ function ControlBar(props: React.HTMLAttributes<HTMLDivElement>) {
       publication: microphoneTrack,
     };
   }, [localParticipant, microphoneTrack]);
-  const htmlProps = mergeProps({ className: 'lk-agent-control-bar' }, props);
 
   if (!localPermissions) {
     visibleControls.microphone = false;
@@ -246,7 +302,7 @@ function ControlBar(props: React.HTMLAttributes<HTMLDivElement>) {
 
             <div className="flex items-center">
               <div {...htmlProps}>
-                <div  >
+                <div>
                   <TrackToggle
                     source={Track.Source.Microphone}
                     showIcon={true}
@@ -257,13 +313,13 @@ function ControlBar(props: React.HTMLAttributes<HTMLDivElement>) {
 
                 </div>
 
-                <CircularVisualizer trackRef={micTrackRef} barCount={7} size={50} />
+                <CircularVisualizer trackRef={micTrackRef} barCount={7} size={40} />
               </div>
-              <DisconnectButton>{'Disconnect'}</DisconnectButton>
+              {/* <DisconnectButton>{'Disconnect'}</DisconnectButton> */}
               {/* <VoiceAssistantControlBar controls={{ leave: true, microphone: true }} /> */}
-              {/* <DisconnectButton>
+              <DisconnectButton>
                 <CloseIcon />
-              </DisconnectButton> */}
+              </DisconnectButton>
             </div>
           </motion.div>
         )}

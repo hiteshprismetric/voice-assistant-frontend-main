@@ -22,7 +22,7 @@ import { Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
 import { CircularVisualizer } from "@/components/CircularVisualizer";
-import { UploadPDFButton } from "@/components/UploadPDFButton";
+// import { UploadPDFButton } from "@/components/UploadPDFButton";
 import { CloseIcon } from "@/components/CloseIcon";
 const mergeProps = (...props: React.HTMLAttributes<HTMLDivElement>[]): React.HTMLAttributes<HTMLDivElement> =>
   Object.assign({}, ...props);
@@ -33,11 +33,11 @@ export default function Page() {
   const [pdfUploaded, setPdfUploaded] = useState(false);
 
   const onConnectButtonClicked = useCallback(async () => {
-    if (!pdfUploaded) {
-      console.warn("PDF not uploaded");
-      toast.warn("Please upload a PDF file before start."); // Show a warning message
-      return; // Exit the function
-    }
+    // if (!pdfUploaded) {
+    //   console.warn("PDF not uploaded");
+    //   toast.warn("Please upload a PDF file before start."); // Show a warning message
+    //   return; // Exit the function
+    // }
     try {
       const roomName = sessionStorage.getItem("roomName");
       const participantName = sessionStorage.getItem("participantName");
@@ -68,7 +68,7 @@ export default function Page() {
       console.error("Connection error:", error);
       toast.error("Failed to connect. Please try again."); // Handle connection errors
     }
-  }, [room, pdfUploaded]);
+  }, [room]);
 
   useEffect(() => {
     room.on(RoomEvent.MediaDevicesError, onDeviceFailure);
@@ -135,10 +135,10 @@ function SimpleVoiceAssistant(props: {
 
       <div className=" w-full flex flex-col items-center space-y-4">
         <div className="flex items-center space-x-4">
-          {!props.pdfUploaded && <UploadPDFButton onUploadAction={props.handlePDFUpload} />}
+          {/* {!props.pdfUploaded && <UploadPDFButton onUploadAction={props.handlePDFUpload} />}
           {props.pdfUploaded && <div className="my-4 flex flex-col items-center">
             <p className="my-2 text-sm" style={{ color: "green" }}>{"File uploaded"}</p>
-          </div>}
+          </div>} */}
 
           {agentState === "disconnected" && (
             <motion.button

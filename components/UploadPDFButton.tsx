@@ -3,12 +3,14 @@
 import { useState } from "react";
 import axios from 'axios';
 import { PDFDocument } from 'pdf-lib';
+import { AiOutlinePlus } from "react-icons/ai"; // Import the Plus icon from react-icons
+import { ClipLoader } from "react-spinners"; // For loader animation
 
 
 export function UploadPDFButton({ onUploadAction }: { onUploadAction: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
-
+  const [uploaded, setUploaded] = useState(false);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,11 +66,12 @@ export function UploadPDFButton({ onUploadAction }: { onUploadAction: () => void
 
     console.log("Uploading file to server...");
 
-    axios.post('http://192.168.0.118:5001/upload_pdf', formData)
+    axios.post('http://192.168.0.95:5001/upload_pdf', formData)
       .then(response => {
         console.log("Upload successful:", response.data);
         setMessage("✅ File uploaded successfully.");
         setUploading(false);
+        setUploaded(true);
         onUploadAction();
       })
       .catch(error => {
@@ -78,14 +81,46 @@ export function UploadPDFButton({ onUploadAction }: { onUploadAction: () => void
       });
   };
 
+return (
+  <div className="flex flex-col items-center">
+    <label className="cursor-pointer flex flex-col items-center">
+      <div 
+        className={`relative flex items-center justify-center w-10 h-10 ${
+          uploaded ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
+        } text-white rounded-full transition-colors`}
+      >
+        <AiOutlinePlus size={34} /> {/* Plus icon */}
+        {uploading && <ClipLoader size={24} color="#ffffff" className="absolute" />} {/* Loader */}
+      </div>
+      <input type="file" accept=".pdf,application/pdf" onChange={handleUpload} hidden />
+    </label>
 
-  return (
-    <div className="my-4 flex flex-col items-center">
-      <label className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700">
-        {uploading ? "Uploading..." : "Upload PDF"}
-        <input type="file" accept=".pdf,application/pdf" onChange={handleUpload} hidden />
-      </label>
-      {message && <p className="mt-2 text-sm">{message}</p>}
-    </div>
-  );
+    {message && <p className="mt-2 text-sm">{message}</p>} {/* Message display */}
+  </div>
+);
+
+  // return (
+  //   <div className="my-4 flex flex-col items-center">
+  //     <label className="cursor-pointer flex flex-col items-center">
+  //       <div className="relative flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700">
+  //         <AiOutlinePlus size={34} /> {/* Plus icon */}
+  //         {uploading && <ClipLoader size={24} color="#ffffff" className="absolute" />} {/* Loader */}
+  //       </div>
+  //       <input type="file" accept=".pdf,application/pdf" onChange={handleUpload} hidden />
+  //     </label>
+  //     {uploading && <p className="mt-2 text-sm">Uploading...</p>}
+  //     {uploaded && <p className="mt-2 text-sm">Uploaded</p>}
+  //     {message && <p className="mt-2 text-sm">{message}</p>}
+
+  //   </div>
+  // );
+  // return (
+  //   <div className="my-4 flex flex-col items-center">
+  //     <label className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700">
+  //       {uploading ? "Uploading..." : "Upload PDF"}
+  //       <input type="file" accept=".pdf,application/pdf" onChange={handleUpload} hidden />
+  //     </label>
+  //     {message && <p className="mt-2 text-sm">{message}</p>}
+  //   </div>
+  // );
 }
